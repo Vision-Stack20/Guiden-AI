@@ -20,7 +20,12 @@ Future<void> main() async {
   // Initialize voice assistant but don't start it yet (will start after splash)
   Get.put(VoiceAssistantController(), permanent: true);
 
-  cameras = await availableCameras();
+  try {
+    cameras = await availableCameras();
+  } catch (e) {
+    debugPrint('Failed to get available cameras: $e');
+    cameras = <CameraDescription>[];
+  }
   final _refreshRateControl = FlutterRefreshRateControl();
 
   try {

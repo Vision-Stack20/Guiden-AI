@@ -27,18 +27,19 @@ import httpx
 import numpy as np
 import replicate
 from dotenv import load_dotenv
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
 from pydantic import BaseModel
 
 
 load_dotenv()
 
-REPLICATE_API_TOKEN = os.getenv("REPLICATE_API_TOKEN", "r8_6Xvf7S7M1iEpY633EM3eJsmkxtrPvHf2V3tYu")
-ELEVENLABS_API_KEY  = os.getenv("ELEVENLABS_API_KEY", "sk_f5b90d7296c8a59b1e23480e4da94d678f4226e64e439897")
+REPLICATE_API_TOKEN = os.getenv("REPLICATE_API_TOKEN", "")
+ELEVENLABS_API_KEY  = os.getenv("ELEVENLABS_API_KEY", "")
 ELEVENLABS_VOICE_ID = os.getenv("ELEVENLABS_VOICE_ID", "EXAVITQu4vr4xnSDxMaL")
 MEM0_API_KEY        = os.getenv("MEM0_API_KEY", "")
 
-os.environ["REPLICATE_API_TOKEN"] = REPLICATE_API_TOKEN
+if REPLICATE_API_TOKEN:
+    os.environ["REPLICATE_API_TOKEN"] = REPLICATE_API_TOKEN
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("guiden")
@@ -474,9 +475,18 @@ class ProductIdentifyResponse(BaseModel):
     processing_time_ms: int = 0
 
 
-# ─── Session store for product context ────────────────────────────────────────
-
 _product_sessions: dict[str, dict] = {}
+
+
+def _clean_expired_product_sessions(max_age_seconds: float = 900.0):
+    """Purge product sessions older than 15 minutes to prevent RAM memory leaks."""
+    now = time.time()
+    expired = [
+        sid for sid, data in _product_sessions.items()
+        if now - data.get("timestamp", 0.0) > max_age_seconds
+    ]
+    for sid in expired:
+        _product_sessions.pop(sid, None)
 
 
 
@@ -1211,7 +1221,8 @@ async def identify_product(request: ProductQueryRequest):
         # Generate TTS
         audio_b64 = await text_to_speech(description)
 
-        # Store in session
+        # Store in session (purging expired entries first)
+        _clean_expired_product_sessions()
         session_id = request.session_id or str(int(time.time()))
         _product_sessions[session_id] = {
             "product_description": description,

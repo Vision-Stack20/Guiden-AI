@@ -1,5 +1,6 @@
 // lib/app/data/services/tts_service.dart
 
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
@@ -13,6 +14,7 @@ import 'package:path_provider/path_provider.dart';
 class TtsService extends GetxService {
   final FlutterTts _flutterTts = FlutterTts();
   final AudioPlayer _audioPlayer = AudioPlayer();
+  StreamSubscription? _playerSub;
 
   final RxBool isSpeaking = false.obs;
 
@@ -54,7 +56,8 @@ class TtsService extends GetxService {
       await file.writeAsBytes(audioBytes);
 
       await _audioPlayer.setFilePath(filePath);
-      _audioPlayer.playerStateStream.listen((state) {
+      _playerSub?.cancel();
+      _playerSub = _audioPlayer.playerStateStream.listen((state) {
         if (state.processingState == ProcessingState.completed) {
           isSpeaking.value = false;
           // Clean up temp file
@@ -72,6 +75,8 @@ class TtsService extends GetxService {
 
   /// Stop all audio.
   Future<void> stop() async {
+    _playerSub?.cancel();
+    _playerSub = null;
     await _flutterTts.stop();
     await _audioPlayer.stop();
     isSpeaking.value = false;
@@ -86,6 +91,7 @@ class TtsService extends GetxService {
 
   @override
   void onClose() {
+    _playerSub?.cancel();
     _flutterTts.stop();
     _audioPlayer.dispose();
     super.onClose();

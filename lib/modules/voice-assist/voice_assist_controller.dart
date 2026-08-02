@@ -29,7 +29,7 @@ enum VoiceAssistState {
 
 class VoiceAssistController extends GetxController {
   // ─── Configuration ──────────────────────────────────────────────────────
-  static const String _baseUrl = 'http://172.20.10.2:8765'; // Android emulator
+  static const String _baseUrl = String.fromEnvironment('SERVER_URL', defaultValue: 'http://10.0.2.2:8765');
   // static const String _baseUrl = 'http://localhost:8000'; // iOS simulator
   // static const String _baseUrl = 'http://YOUR_SERVER_IP:8000'; // Physical device
 
