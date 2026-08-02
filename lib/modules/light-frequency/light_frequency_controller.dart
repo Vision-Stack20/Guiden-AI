@@ -121,7 +121,7 @@ class LightFrequencyController extends GetxController {
 
     for (int row = 0; row < image.height; row += 5) {
       final rowStart = row * stride;
-      for (int col = 0; col < stride; col += 20) {
+      for (int col = 0; col < image.width; col += 20) {
         if (rowStart + col < bytes.length) {
           sum += bytes[rowStart + col];
           count++;

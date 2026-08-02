@@ -5,7 +5,8 @@ import base64
 import os
 import sys
 
-os.environ["REPLICATE_API_TOKEN"] = "r8_6Xvf7S7M1iEpY633EM3eJsmkxtrPvHf2V3tYu"  # or set in env
+if "REPLICATE_API_TOKEN" not in os.environ:
+    os.environ["REPLICATE_API_TOKEN"] = os.getenv("REPLICATE_API_TOKEN", "")
 
 with open("CLEAR_2.jpeg", "rb") as f:
     image_bytes = f.read()

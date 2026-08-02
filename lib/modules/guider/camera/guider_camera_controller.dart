@@ -18,7 +18,7 @@ import '../../../services/hand_detector.dart';
 import '../../../services/voice_assistant_controller.dart';
 import '../../../services/yolo_model_manager.dart';
 
-const _kWsUrl = 'ws://172.20.10.2:8765/ws/assist';
+const _kWsUrl = String.fromEnvironment('WS_URL', defaultValue: 'ws://10.0.2.2:8765/ws/assist');
 const _kUserId = 'user_001'; // persist this (SharedPrefs/UUID)
 
 // ─── Models ───────────────────────────────────────────────────────────────────
@@ -869,11 +869,13 @@ class _YuvArgs {
     width: i.width,
     height: i.height,
     yBytes: i.planes[0].bytes,
-    uBytes: i.planes[1].bytes,
-    vBytes: i.planes[2].bytes,
+    uBytes: i.planes.length > 1 ? i.planes[1].bytes : i.planes[0].bytes,
+    vBytes: i.planes.length > 2
+        ? i.planes[2].bytes
+        : (i.planes.length > 1 ? i.planes[1].bytes : i.planes[0].bytes),
     yRowStride: i.planes[0].bytesPerRow,
-    uvRowStride: i.planes[1].bytesPerRow,
-    uvPixelStride: i.planes[1].bytesPerPixel ?? 1,
+    uvRowStride: i.planes.length > 1 ? i.planes[1].bytesPerRow : i.planes[0].bytesPerRow,
+    uvPixelStride: i.planes.length > 1 ? (i.planes[1].bytesPerPixel ?? 1) : 1,
     sensorOrientation: o,
   );
 }
